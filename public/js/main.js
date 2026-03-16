@@ -1,24 +1,22 @@
-// ─── Scroll Reveal ───────────────────────────────────────────────
+// ─── Scroll Reveal ────────────────────────────────────────────────
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry, i) => {
     if (entry.isIntersecting) {
-      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      setTimeout(() => entry.target.classList.add('visible'), i * 90);
       revealObserver.unobserve(entry.target);
     }
   });
-}, { threshold: 0.1 });
+}, { threshold: 0.12 });
 
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-// ─── Smooth nav background on scroll ─────────────────────────────
-const nav = document.querySelector('nav');
+// ─── Nav: compact on scroll ───────────────────────────────────────
+const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
-  nav.style.background = window.scrollY > 40
-    ? 'rgba(10, 15, 13, 0.97)'
-    : 'rgba(10, 15, 13, 0.85)';
-});
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
 
-// ─── Animated counters ───────────────────────────────────────────
+// ─── Animated counters ────────────────────────────────────────────
 function animateCounter(el, target, suffix = '', decimals = 0) {
   const duration = 1800;
   const start = performance.now();
@@ -26,9 +24,9 @@ function animateCounter(el, target, suffix = '', decimals = 0) {
     const progress = Math.min((now - start) / duration, 1);
     const ease = 1 - Math.pow(1 - progress, 3);
     const value = ease * target;
-    el.textContent = decimals
-      ? value.toFixed(decimals) + suffix
-      : Math.round(value).toLocaleString() + suffix;
+    el.textContent = (decimals
+      ? value.toFixed(decimals)
+      : Math.round(value).toLocaleString()) + suffix;
     if (progress < 1) requestAnimationFrame(update);
   };
   requestAnimationFrame(update);
@@ -37,9 +35,9 @@ function animateCounter(el, target, suffix = '', decimals = 0) {
 const statsObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      document.querySelectorAll('.stat-item .number').forEach(el => {
-        const raw = el.dataset.value;
-        const suffix = el.dataset.suffix || '';
+      document.querySelectorAll('.stat-item .number[data-value]').forEach(el => {
+        const raw      = el.dataset.value;
+        const suffix   = el.dataset.suffix || '';
         const decimals = parseInt(el.dataset.decimals || '0');
         animateCounter(el, parseFloat(raw), suffix, decimals);
       });
@@ -51,23 +49,13 @@ const statsObserver = new IntersectionObserver((entries) => {
 const statsSection = document.querySelector('#stats');
 if (statsSection) statsObserver.observe(statsSection);
 
-// ─── Property card tabs ──────────────────────────────────────────
-document.querySelectorAll('.prop-card').forEach(card => {
-  card.addEventListener('click', () => {
-    document.querySelectorAll('.prop-card').forEach(c => c.classList.remove('active'));
-    card.classList.add('active');
-  });
-});
-
-// ─── Mobile nav toggle ───────────────────────────────────────────
-// (nav links hidden on mobile — could add hamburger here)
-
-// ─── Micro interaction: CTA button pulse on hover ─────────────────
-document.querySelectorAll('.btn-primary').forEach(btn => {
-  btn.addEventListener('mouseenter', () => {
-    btn.style.boxShadow = '0 0 80px rgba(31,184,110,0.6)';
-  });
-  btn.addEventListener('mouseleave', () => {
-    btn.style.boxShadow = '0 0 40px rgba(31,184,110,0.35)';
+// ─── Smooth-scroll for in-page anchors ────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 });
