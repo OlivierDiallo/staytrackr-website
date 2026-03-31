@@ -302,6 +302,29 @@
   </div>
 </section>
 
+<!-- ─── Mailing list ──────────────────────────────────────────────── -->
+<section id="waitlist">
+  <div class="waitlist-inner reveal">
+    <div class="waitlist-badge">📬 Stay in the loop</div>
+    <h2>Be the first to know.</h2>
+    <p>Get notified when StayTrackr launches, hear about new features, and receive exclusive early-access offers. No spam — ever.</p>
+    <form class="signup-form" id="signupForm">
+      <div class="signup-row">
+        <input type="email" id="signupEmail" placeholder="your@email.com" required autocomplete="email" />
+        <button type="submit" class="btn-signup" data-track="waitlist-signup">
+          <span class="btn-label">Notify me</span>
+          <span class="btn-loading" hidden>...</span>
+        </button>
+      </div>
+      <p class="signup-note">Join <span id="signupCount">—</span> property owners already on the list. Unsubscribe anytime.</p>
+      <div class="signup-success" id="signupSuccess" hidden>
+        <span>✅</span> You're on the list! We'll be in touch.
+      </div>
+      <div class="signup-error" id="signupError" hidden></div>
+    </form>
+  </div>
+</section>
+
 <!-- ─── CTA ───────────────────────────────────────────────────────── -->
 <section id="cta">
   <div class="cta-inner reveal">

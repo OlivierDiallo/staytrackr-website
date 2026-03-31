@@ -59,3 +59,65 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     }
   });
 });
+
+// ─── Mailing list signup ──────────────────────────────────────────
+(function () {
+  // Show live count
+  fetch('/signup/count')
+    .then(r => r.json())
+    .then(({ count }) => {
+      const el = document.getElementById('signupCount');
+      if (el && count > 0) el.textContent = count.toLocaleString();
+    })
+    .catch(() => {});
+
+  const form    = document.getElementById('signupForm');
+  const input   = document.getElementById('signupEmail');
+  const btn     = form && form.querySelector('.btn-signup');
+  const success = document.getElementById('signupSuccess');
+  const error   = document.getElementById('signupError');
+
+  if (!form) return;
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const email = input.value.trim();
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.querySelector('.btn-label').hidden = true;
+    btn.querySelector('.btn-loading').hidden = false;
+    error.hidden = true;
+
+    try {
+      const res  = await fetch('/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        form.querySelector('.signup-row').hidden = true;
+        form.querySelector('.signup-note').hidden = true;
+        success.hidden = false;
+        if (data.count) {
+          const el = document.getElementById('signupCount');
+          if (el) el.textContent = data.count.toLocaleString();
+        }
+      } else {
+        error.textContent = data.error || 'Something went wrong. Please try again.';
+        error.hidden = false;
+        btn.disabled = false;
+        btn.querySelector('.btn-label').hidden = false;
+        btn.querySelector('.btn-loading').hidden = true;
+      }
+    } catch {
+      error.textContent = 'Network error. Please try again.';
+      error.hidden = false;
+      btn.disabled = false;
+      btn.querySelector('.btn-label').hidden = false;
+      btn.querySelector('.btn-loading').hidden = true;
+    }
+  });
+})();

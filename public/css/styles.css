@@ -779,3 +779,126 @@ footer {
   .hero-phone { border-radius: 36px; }
   .feature-phone { border-radius: 36px; }
 }
+
+/* ─── Waitlist / Mailing List ────────────────────────────────────── */
+#waitlist {
+  padding: 96px 24px;
+  background: linear-gradient(135deg, rgba(31,184,110,0.08) 0%, rgba(8,11,9,0) 60%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.waitlist-inner {
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.waitlist-badge {
+  display: inline-block;
+  background: rgba(31,184,110,0.12);
+  border: 1px solid rgba(31,184,110,0.3);
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+
+.waitlist-inner h2 {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 14px;
+  line-height: 1.1;
+}
+
+.waitlist-inner p {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.signup-form { width: 100%; }
+
+.signup-row {
+  display: flex;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto 12px;
+}
+
+.signup-row input[type="email"] {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.signup-row input[type="email"]:focus {
+  border-color: var(--green);
+}
+
+.signup-row input[type="email"]::placeholder {
+  color: var(--muted);
+}
+
+.btn-signup {
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-signup:hover { background: var(--green-dark); }
+.btn-signup:active { transform: scale(0.97); }
+.btn-signup:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.signup-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+.signup-success {
+  margin-top: 16px;
+  background: rgba(31,184,110,0.12);
+  border: 1px solid rgba(31,184,110,0.3);
+  color: var(--green);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.signup-error {
+  margin-top: 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .signup-row { flex-direction: column; }
+  .btn-signup { width: 100%; }
+}
