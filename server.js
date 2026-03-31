@@ -1,9 +1,14 @@
 const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
+const { Resend } = require('resend');
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+// Load .env if present (local dev)
+try { require('fs').readFileSync('.env', 'utf8').split('\n').forEach(l => { const [k,...v] = l.split('='); if (k && !k.startsWith('#')) process.env[k.trim()] = v.join('=').trim(); }); } catch {}
+
+const app    = express();
+const PORT   = process.env.PORT || 3000;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // ─── Data directory ───────────────────────────────────────────────
 const DATA_DIR      = path.join(__dirname, 'data');
@@ -79,6 +84,78 @@ app.post('/contact', (req, res) => {
   }
 });
 
+// ─── Confirmation email template ─────────────────────────────────
+function confirmationEmailHtml(email) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:560px;width:100%;">
+
+      <!-- Header -->
+      <tr><td style="background:#080b09;padding:32px 40px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;">
+          <span style="font-size:28px;">🏠</span>
+          <span style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.5px;">StayTrackr</span>
+        </div>
+      </td></tr>
+
+      <!-- Hero band -->
+      <tr><td style="background:#1FB86E;padding:6px 0;"></td></tr>
+
+      <!-- Body -->
+      <tr><td style="padding:40px 40px 32px;">
+        <h1 style="margin:0 0 12px;font-size:26px;font-weight:800;color:#0d0d0d;line-height:1.2;">
+          You're on the list! 🎉
+        </h1>
+        <p style="margin:0 0 20px;font-size:15px;color:#555;line-height:1.7;">
+          Thanks for signing up — you'll be among the first to know when StayTrackr launches on the App Store.
+        </p>
+        <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7;">
+          We'll keep you posted on:
+        </p>
+        <table cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+          <tr><td style="padding:6px 0;">
+            <span style="color:#1FB86E;font-weight:700;margin-right:10px;">✓</span>
+            <span style="font-size:14px;color:#333;">Launch date &amp; App Store link</span>
+          </td></tr>
+          <tr><td style="padding:6px 0;">
+            <span style="color:#1FB86E;font-weight:700;margin-right:10px;">✓</span>
+            <span style="font-size:14px;color:#333;">New features &amp; updates</span>
+          </td></tr>
+          <tr><td style="padding:6px 0;">
+            <span style="color:#1FB86E;font-weight:700;margin-right:10px;">✓</span>
+            <span style="font-size:14px;color:#333;">Exclusive early-access offers</span>
+          </td></tr>
+        </table>
+
+        <a href="https://staytrackr.app" style="display:inline-block;background:#1FB86E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 28px;border-radius:10px;">
+          Visit StayTrackr →
+        </a>
+      </td></tr>
+
+      <!-- Divider -->
+      <tr><td style="padding:0 40px;"><hr style="border:none;border-top:1px solid #f0f0f0;margin:0;"/></td></tr>
+
+      <!-- Footer -->
+      <tr><td style="padding:24px 40px;text-align:center;">
+        <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;">
+          You're receiving this because you signed up at staytrackr.app.<br/>
+          <a href="mailto:hello@staytrackr.app" style="color:#1FB86E;text-decoration:none;">hello@staytrackr.app</a>
+          &nbsp;·&nbsp;
+          <a href="https://staytrackr.app/privacy" style="color:#aaa;text-decoration:none;">Privacy Policy</a>
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+}
+
 // ─── Mailing list signup ──────────────────────────────────────────
 app.get('/signup/count', (req, res) => {
   try {
@@ -89,27 +166,50 @@ app.get('/signup/count', (req, res) => {
   }
 });
 
-app.post('/signup', (req, res) => {
+app.post('/signup', async (req, res) => {
   const { email } = req.body;
 
   if (!email || !/\S+@\S+\.\S+/.test(email)) {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
 
-  try {
-    const signups = JSON.parse(fs.readFileSync(SIGNUPS_FILE, 'utf8'));
-    const normalised = email.trim().toLowerCase();
+  const normalised = email.trim().toLowerCase();
 
-    if (signups.find(s => s.email === normalised)) {
-      return res.status(200).json({ ok: true, alreadyExists: true });
+  try {
+    // Save locally
+    const signups = JSON.parse(fs.readFileSync(SIGNUPS_FILE, 'utf8'));
+    const alreadyExists = !!signups.find(s => s.email === normalised);
+
+    if (!alreadyExists) {
+      signups.push({ id: Date.now(), email: normalised, timestamp: new Date().toISOString(), source: 'website' });
+      fs.writeFileSync(SIGNUPS_FILE, JSON.stringify(signups, null, 2));
+      console.log(`[signup] ${normalised} joined the mailing list (total: ${signups.length})`);
     }
 
-    signups.push({ id: Date.now(), email: normalised, timestamp: new Date().toISOString(), source: 'website' });
-    fs.writeFileSync(SIGNUPS_FILE, JSON.stringify(signups, null, 2));
-    console.log(`[signup] ${normalised} joined the mailing list (total: ${signups.length})`);
-    return res.status(200).json({ ok: true, count: signups.length });
+    // Resend: add to audience + send confirmation email
+    if (resend && !alreadyExists) {
+      // Add to audience (if configured)
+      if (process.env.RESEND_AUDIENCE_ID) {
+        await resend.contacts.create({
+          email: normalised,
+          audienceId: process.env.RESEND_AUDIENCE_ID,
+          unsubscribed: false,
+        }).catch(e => console.error('[resend] audience add failed:', e.message));
+      }
+
+      // Send confirmation email
+      const from = process.env.RESEND_FROM || 'StayTrackr <onboarding@resend.dev>';
+      await resend.emails.send({
+        from,
+        to: normalised,
+        subject: "You're on the list 🏠",
+        html: confirmationEmailHtml(normalised),
+      }).catch(e => console.error('[resend] email send failed:', e.message));
+    }
+
+    return res.status(200).json({ ok: true, count: signups.length, alreadyExists });
   } catch (err) {
-    console.error('[signup] Failed to save:', err);
+    console.error('[signup] Failed:', err);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
