@@ -257,7 +257,19 @@
       <div class="form-card">
         <div class="recipient-count" id="recipient-info">📬 Loading subscriber count…</div>
         <form id="broadcast-form">
-          <div class="form-group">
+          <!-- Test email -->
+        <div class="form-card" id="test-email-card" style="margin-bottom:20px;border-color:rgba(31,184,110,0.2);">
+          <h3 style="font-size:.9rem;font-weight:700;margin-bottom:12px;">🧪 Send a test email first</h3>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="email" id="test-to" placeholder="olivierdiallo@icloud.com" value="olivierdiallo@icloud.com"
+              style="flex:1;min-width:220px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.88rem;font-family:var(--font);outline:none;" />
+            <button class="btn-sm green" id="test-send-btn" type="button">Send test →</button>
+          </div>
+          <div class="alert alert-success" id="test-success" style="margin-top:10px;"></div>
+          <div class="alert alert-error"   id="test-error"   style="margin-top:10px;"></div>
+        </div>
+
+      <div class="form-group">
             <label>Subject line</label>
             <input type="text" id="bc-subject" placeholder="StayTrackr is now live on the App Store 🎉" required />
           </div>
@@ -425,6 +437,29 @@
         <td><span class="badge ${c.status==='new'?'badge-amber':'badge-green'}">${c.status}</span></td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty-state">No messages yet.</td></tr>';
   }
+
+  // ── Test email ──
+  $('test-send-btn').addEventListener('click', async () => {
+    const btn = $('test-send-btn');
+    const to  = $('test-to').value.trim();
+    $('test-success').style.display = 'none';
+    $('test-error').style.display   = 'none';
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
+
+    const res  = await api('/admin/api/test-email', { method: 'POST', body: JSON.stringify({ to }) });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      $('test-success').textContent  = `✅ Test email sent to ${to}! Check your inbox.`;
+      $('test-success').style.display = 'block';
+    } else {
+      $('test-error').textContent  = data.error || 'Failed. Is RESEND_API_KEY set?';
+      $('test-error').style.display = 'block';
+    }
+    btn.textContent = 'Send test →';
+    btn.disabled = false;
+  });
 
   // ── Broadcast ──
   $('broadcast-form').addEventListener('submit', async e => {

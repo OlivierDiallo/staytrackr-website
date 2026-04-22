@@ -263,6 +263,48 @@ app.get('/admin/api/contacts', (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to load contacts' }); }
 });
 
+// ─── Test email ───────────────────────────────────────────────────
+app.post('/admin/api/test-email', async (req, res) => {
+  if (!adminAuth(req, res)) return;
+  if (!resend) return res.status(503).json({ error: 'Resend API key not configured. Add RESEND_API_KEY to your environment variables.' });
+
+  const { to } = req.body;
+  if (!to || !/\S+@\S+\.\S+/.test(to)) return res.status(400).json({ error: 'Invalid email address.' });
+
+  const from = process.env.RESEND_FROM || 'StayTrackr <onboarding@resend.dev>';
+  try {
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject: 'Hello World — StayTrackr test email ✅',
+      html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;max-width:520px;width:100%;">
+            <tr><td style="background:#080b09;padding:28px 36px;text-align:center;">
+              <span style="font-size:24px;">🏠</span>
+              <span style="color:#fff;font-size:18px;font-weight:800;vertical-align:middle;margin-left:8px;">StayTrackr</span>
+            </td></tr>
+            <tr><td style="background:#1FB86E;padding:4px 0;"></td></tr>
+            <tr><td style="padding:36px;">
+              <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#0d0d0d;">Hello World 👋</h1>
+              <p style="margin:0 0 12px;font-size:15px;color:#555;line-height:1.7;">This is a test email from <strong>StayTrackr</strong>.</p>
+              <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.7;">If you received this, your Resend integration is working correctly. 🎉</p>
+              <p style="font-size:12px;color:#aaa;">Sent via StayTrackr Admin · <a href="https://getstaytrackr.com" style="color:#1FB86E;">getstaytrackr.com</a></p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table></body></html>`,
+    });
+    console.log(`[test-email] Sent to ${to}`, result);
+    res.json({ ok: true, id: result?.data?.id });
+  } catch (err) {
+    console.error('[test-email] Error:', err);
+    res.status(500).json({ error: err.message || 'Failed to send. Check your Resend API key.' });
+  }
+});
+
 // ─── Broadcast email ──────────────────────────────────────────────
 app.post('/admin/api/broadcast', async (req, res) => {
   if (!adminAuth(req, res)) return;
