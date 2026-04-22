@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayTrackr Admin</title>
+  <link rel="icon" href="/images/app-icon.png" type="image/png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #1FB86E; --green-dim: rgba(31,184,110,0.12);
+      --bg: #080b09; --bg2: #0f1411; --bg3: #161c18;
+      --border: rgba(255,255,255,0.07);
+      --text: #f2f5f3; --muted: rgba(242,245,243,0.5);
+      --red: #ef4444; --amber: #f59e0b;
+      --radius: 12px; --font: -apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px;
+    }
+    .login-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px; width: 100%; max-width: 380px;
+      text-align: center;
+    }
+    .login-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 28px; }
+    .login-logo img { width: 40px; height: 40px; border-radius: 10px; }
+    .login-logo span { font-size: 1.2rem; font-weight: 800; }
+    .login-card h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+    .login-card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+    .login-card input {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 16px; color: var(--text); font-size: 0.95rem;
+      font-family: var(--font); outline: none; margin-bottom: 12px; transition: border-color .2s;
+    }
+    .login-card input:focus { border-color: var(--green); }
+    .login-btn {
+      width: 100%; background: var(--green); color: #fff; border: none;
+      border-radius: 10px; padding: 13px; font-size: 0.95rem; font-weight: 700;
+      font-family: var(--font); cursor: pointer; transition: opacity .2s;
+    }
+    .login-btn:hover { opacity: .9; }
+    .login-error { color: var(--red); font-size: 0.82rem; margin-top: 10px; display: none; }
+
+    /* ── App Shell ── */
+    #app { display: none; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      padding: 24px 0; display: flex; flex-direction: column; z-index: 10;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .sidebar-logo img { width: 32px; height: 32px; border-radius: 8px; }
+    .sidebar-logo span { font-weight: 800; font-size: 0.95rem; }
+    .sidebar-logo small { display: block; font-size: 0.7rem; color: var(--green); font-weight: 600; }
+    nav a {
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+      color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 500;
+      border-radius: 8px; margin: 0 8px 2px; transition: all .15s;
+    }
+    nav a:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    nav a.active { background: var(--green-dim); color: var(--green); font-weight: 700; }
+    nav a .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px 0; border-top: 1px solid var(--border);
+    }
+    .logout-btn {
+      width: 100%; background: rgba(239,68,68,0.1); color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2); border-radius: 8px;
+      padding: 9px; font-size: 0.82rem; font-weight: 700; cursor: pointer; font-family: var(--font);
+      transition: background .2s;
+    }
+    .logout-btn:hover { background: rgba(239,68,68,0.18); }
+
+    .main { margin-left: 220px; padding: 32px; min-height: 100vh; max-width: calc(100vw - 220px); }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 1.6rem; font-weight: 900; }
+    .page-header p { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+    /* ── Tabs ── */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Stats row ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .stat-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-bottom: 8px; }
+    .stat-card .value { font-size: 2rem; font-weight: 900; color: var(--text); }
+    .stat-card .value.green { color: var(--green); }
+
+    /* ── Table ── */
+    .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .table-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+    }
+    .table-toolbar h3 { font-size: 0.95rem; font-weight: 700; }
+    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-sm {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 7px 14px;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: var(--font);
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+      transition: background .2s;
+    }
+    .btn-sm:hover { background: rgba(255,255,255,0.09); }
+    .btn-sm.green { background: var(--green); border-color: var(--green); color: #fff; }
+    .btn-sm.green:hover { opacity: .9; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; padding: 10px 20px;
+      font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em;
+      font-weight: 600; border-bottom: 1px solid var(--border);
+    }
+    tbody td { padding: 12px 20px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .email-cell { font-weight: 600; color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.78rem; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .empty-state { padding: 48px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+    /* ── Broadcast form ── */
+    .form-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .form-card + .form-card { margin-top: 16px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 0.92rem;
+      font-family: var(--font); outline: none; transition: border-color .2s;
+    }
+    .form-group textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--green); }
+    .form-hint { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+    .btn-primary {
+      background: var(--green); color: #fff; border: none; border-radius: 10px;
+      padding: 13px 28px; font-size: 0.95rem; font-weight: 700;
+      font-family: var(--font); cursor: pointer; transition: opacity .2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { opacity: .9; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .alert {
+      padding: 14px 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; margin-top: 16px; display: none;
+    }
+    .alert-success { background: var(--green-dim); border: 1px solid rgba(31,184,110,0.3); color: var(--green); }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); }
+    .preview-box {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-top: 12px; font-size: 0.82rem;
+      color: var(--muted); line-height: 1.7;
+    }
+    .recipient-count { display: inline-flex; align-items: center; gap: 6px; background: var(--green-dim); color: var(--green); border-radius: 8px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="/images/app-icon.png" alt="StayTrackr" />
+      <div><span>StayTrackr</span></div>
+    </div>
+    <h2>Admin Login</h2>
+    <p>Enter your admin password to continue.</p>
+    <form id="login-form">
+      <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" />
+      <button type="submit" class="login-btn">Sign in →</button>
+      <p class="login-error" id="login-error">Incorrect password. Try again.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/images/app-icon.png" alt="StayTrackr" />
+      <div>
+        <span>StayTrackr</span>
+        <small>Admin</small>
+      </div>
+    </div>
+    <nav>
+      <a href="#" class="active" data-tab="overview"><span class="icon">📊</span> Overview</a>
+      <a href="#" data-tab="subscribers"><span class="icon">📬</span> Subscribers</a>
+      <a href="#" data-tab="broadcast"><span class="icon">📣</span> Send Email</a>
+      <a href="#" data-tab="contacts"><span class="icon">💬</span> Messages</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" id="logout-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- Overview -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="page-header">
+        <h1>Overview</h1>
+        <p>Your StayTrackr mailing list at a glance.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">Subscribers</div><div class="value green" id="stat-subs">—</div></div>
+        <div class="stat-card"><div class="label">New this week</div><div class="value" id="stat-week">—</div></div>
+        <div class="stat-card"><div class="label">Contact messages</div><div class="value" id="stat-contacts">—</div></div>
+        <div class="stat-card"><div class="label">Resend connected</div><div class="value" id="stat-resend">—</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar"><h3>Latest signups</h3></div>
+        <table>
+          <thead><tr><th>Email</th><th>Signed up</th><th>Source</th></tr></thead>
+          <tbody id="latest-tbody"><tr><td colspan="3" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Subscribers -->
+    <div class="tab-content" id="tab-subscribers">
+      <div class="page-header">
+        <h1>Subscribers</h1>
+        <p>Everyone who joined your waitlist.</p>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <h3>All subscribers <span class="badge badge-green" id="sub-count-badge">0</span></h3>
+          <div class="toolbar-actions">
+            <button class="btn-sm" id="export-csv-btn">⬇ Export CSV</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Email</th><th>Date joined</th><th>Source</th></tr></thead>
+          <tbody id="subs-tbody"><tr><td colspan="4" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Broadcast -->
+    <div class="tab-content" id="tab-broadcast">
+      <div class="page-header">
+        <h1>Send Email</h1>
+        <p>Compose and send an email to your entire mailing list.</p>
+      </div>
+      <div class="form-card">
+        <div class="recipient-count" id="recipient-info">📬 Loading subscriber count…</div>
+        <form id="broadcast-form">
+          <div class="form-group">
+            <label>Subject line</label>
+            <input type="text" id="bc-subject" placeholder="StayTrackr is now live on the App Store 🎉" required />
+          </div>
+          <div class="form-group">
+            <label>Preview text <span style="font-weight:400;text-transform:none">(shown in inbox before opening)</span></label>
+            <input type="text" id="bc-preview" placeholder="Download StayTrackr free today…" />
+          </div>
+          <div class="form-group">
+            <label>Heading</label>
+            <input type="text" id="bc-heading" placeholder="We're live! 🚀" required />
+          </div>
+          <div class="form-group">
+            <label>Body message</label>
+            <textarea id="bc-body" placeholder="Write your message here…&#10;&#10;Supports basic HTML like <b>bold</b> or <a href='...'>links</a>." required></textarea>
+            <p class="form-hint">You can use basic HTML tags. Keep it short and personal.</p>
+          </div>
+          <div class="form-group">
+            <label>CTA button text</label>
+            <input type="text" id="bc-cta-text" placeholder="Download on the App Store →" />
+          </div>
+          <div class="form-group">
+            <label>CTA button URL</label>
+            <input type="url" id="bc-cta-url" placeholder="https://apps.apple.com/app/staytrackr" />
+          </div>
+          <button type="submit" class="btn-primary" id="bc-send-btn">
+            <span id="bc-btn-label">📣 Send to all subscribers</span>
+          </button>
+          <div class="alert alert-success" id="bc-success"></div>
+          <div class="alert alert-error" id="bc-error"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="tab-content" id="tab-contacts">
+      <div class="page-header">
+        <h1>Messages</h1>
+        <p>Contact form submissions from your website.</p>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <h3>All messages <span class="badge badge-amber" id="contact-count-badge">0</span></h3>
+        </div>
+        <table>
+          <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Status</th></tr></thead>
+          <tbody id="contacts-tbody"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  let token = '';
+
+  // ── Helpers ──
+  const $ = id => document.getElementById(id);
+  function api(path, opts = {}) {
+    return fetch(path, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
+  }
+  function fmt(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+           d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── Login ──
+  $('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pw = $('pw-input').value.trim();
+    const res = await fetch('/admin/api/stats', { headers: { 'Authorization': `Bearer ${pw}` } });
+    if (res.ok) {
+      token = pw;
+      $('login-screen').style.display = 'none';
+      $('app').style.display = 'block';
+      loadAll();
+    } else {
+      $('login-error').style.display = 'block';
+    }
+  });
+
+  $('logout-btn').addEventListener('click', () => {
+    token = '';
+    $('app').style.display = 'none';
+    $('login-screen').style.display = 'flex';
+    $('pw-input').value = '';
+  });
+
+  // ── Tab nav ──
+  document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      $('tab-' + a.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Load all data ──
+  async function loadAll() {
+    await Promise.all([loadStats(), loadSubscribers(), loadContacts()]);
+  }
+
+  async function loadStats() {
+    const res = await api('/admin/api/stats');
+    if (!res.ok) return;
+    const d = await res.json();
+    $('stat-subs').textContent    = d.subscribers;
+    $('stat-week').textContent    = d.thisWeek;
+    $('stat-contacts').textContent = d.contacts;
+    $('stat-resend').textContent  = d.resendConnected ? '✅' : '—';
+    $('recipient-info').textContent = `📬 Will send to ${d.subscribers} subscriber${d.subscribers !== 1 ? 's' : ''}`;
+  }
+
+  async function loadSubscribers() {
+    const res = await api('/admin/api/subscribers');
+    if (!res.ok) return;
+    const { subscribers } = await res.json();
+    $('sub-count-badge').textContent = subscribers.length;
+
+    // Latest 5 for overview
+    const latest = subscribers.slice(-5).reverse();
+    $('latest-tbody').innerHTML = latest.length ? latest.map(s => `
+      <tr>
+        <td class="email-cell">${s.email}</td>
+        <td class="muted">${fmt(s.timestamp)}</td>
+        <td><span class="badge badge-green">${s.source || 'website'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="3" class="empty-state">No subscribers yet.</td></tr>';
+
+    // Full list
+    $('subs-tbody').innerHTML = subscribers.length ? subscribers.slice().reverse().map((s, i) => `
+      <tr>
+        <td class="muted">${subscribers.length - i}</td>
+        <td class="email-cell">${s.email}</td>
+        <td class="muted">${fmt(s.timestamp)}</td>
+        <td><span class="badge badge-green">${s.source || 'website'}</span></td>
+      </tr>`).join('') : '<tr><td colspan="4" class="empty-state">No subscribers yet. Share your website!</td></tr>';
+
+    // CSV export
+    $('export-csv-btn').onclick = () => {
+      const csv = ['#,email,date,source', ...subscribers.map((s,i) => `${i+1},${s.email},${s.timestamp},${s.source||'website'}`)].join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = 'staytrackr-subscribers.csv';
+      a.click();
+    };
+  }
+
+  async function loadContacts() {
+    const res = await api('/admin/api/contacts');
+    if (!res.ok) return;
+    const { contacts } = await res.json();
+    $('contact-count-badge').textContent = contacts.filter(c => c.status === 'new').length;
+
+    $('contacts-tbody').innerHTML = contacts.length ? contacts.slice().reverse().map(c => `
+      <tr>
+        <td class="muted">${fmt(c.timestamp)}</td>
+        <td>${c.name}</td>
+        <td class="email-cell">${c.email}</td>
+        <td>${c.subject}</td>
+        <td style="max-width:240px;white-space:pre-wrap;font-size:.8rem;color:var(--muted)">${c.message.slice(0,120)}${c.message.length>120?'…':''}</td>
+        <td><span class="badge ${c.status==='new'?'badge-amber':'badge-green'}">${c.status}</span></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty-state">No messages yet.</td></tr>';
+  }
+
+  // ── Broadcast ──
+  $('broadcast-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('bc-send-btn');
+    btn.disabled = true;
+    $('bc-btn-label').textContent = 'Sending…';
+    $('bc-success').style.display = 'none';
+    $('bc-error').style.display = 'none';
+
+    const payload = {
+      subject:  $('bc-subject').value.trim(),
+      preview:  $('bc-preview').value.trim(),
+      heading:  $('bc-heading').value.trim(),
+      body:     $('bc-body').value.trim(),
+      ctaText:  $('bc-cta-text').value.trim(),
+      ctaUrl:   $('bc-cta-url').value.trim(),
+    };
+
+    const res = await api('/admin/api/broadcast', { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      $('bc-success').textContent = `✅ Sent to ${data.sent} subscriber${data.sent!==1?'s':''}!`;
+      $('bc-success').style.display = 'block';
+      $('broadcast-form').reset();
+    } else {
+      $('bc-error').textContent = data.error || 'Failed to send. Check your Resend API key.';
+      $('bc-error').style.display = 'block';
+    }
+
+    btn.disabled = false;
+    $('bc-btn-label').textContent = '📣 Send to all subscribers';
+  });
+
+})();
+</script>
+</body>
+</html>

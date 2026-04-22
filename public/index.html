@@ -316,7 +316,11 @@
           <span class="btn-loading" hidden>...</span>
         </button>
       </div>
-      <p class="signup-note">Join <span id="signupCount">—</span> property owners already on the list. Unsubscribe anytime.</p>
+      <label class="gdpr-consent">
+        <input type="checkbox" id="signupConsent" required />
+        <span>I agree to receive launch updates and marketing emails from StayTrackr. <a href="/privacy">Privacy Policy</a>. Unsubscribe anytime.</span>
+      </label>
+      <p class="signup-note">Join <span id="signupCount">—</span> property owners already on the list.</p>
       <div class="signup-success" id="signupSuccess" hidden>
         <span>✅</span> You're on the list! We'll be in touch.
       </div>

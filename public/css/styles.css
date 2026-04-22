@@ -902,3 +902,34 @@ footer {
   .signup-row { flex-direction: column; }
   .btn-signup { width: 100%; }
 }
+
+/* ─── GDPR consent checkbox ──────────────────────────────────────── */
+.gdpr-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 480px;
+  margin: 12px auto 0;
+  cursor: pointer;
+  text-align: left;
+}
+.gdpr-consent input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin-top: 2px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+.gdpr-consent span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.gdpr-consent a {
+  color: var(--green);
+  text-decoration: none;
+}
+.gdpr-consent a:hover {
+  text-decoration: underline;
+}
