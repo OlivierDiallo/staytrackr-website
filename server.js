@@ -143,7 +143,7 @@ function confirmationEmailHtml(email) {
       <tr><td style="padding:24px 40px;text-align:center;">
         <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;">
           You're receiving this because you signed up at staytrackr.app.<br/>
-          <a href="mailto:hello@staytrackr.app" style="color:#1FB86E;text-decoration:none;">hello@staytrackr.app</a>
+          <a href="mailto:socials@getstaytrackr.com" style="color:#1FB86E;text-decoration:none;">socials@getstaytrackr.com</a>
           &nbsp;·&nbsp;
           <a href="https://staytrackr.app/privacy" style="color:#aaa;text-decoration:none;">Privacy Policy</a>
         </p>
