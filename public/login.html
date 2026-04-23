@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — StayTrackr</title>
+  <link rel="icon" type="image/png" href="/images/app-icon.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #080b09;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #0d1210;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+      text-decoration: none;
+    }
+    .logo img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+    .logo span {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.4px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      letter-spacing: -0.4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      background: #0a0f0c;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 44px 14px 16px;
+      font-size: 15px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    input:focus {
+      border-color: #1FB86E;
+    }
+    input::placeholder { color: #333; }
+
+    .toggle-pw {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+      font-size: 16px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .toggle-pw:hover { color: #aaa; }
+
+    .btn {
+      width: 100%;
+      background: #1FB86E;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-family: inherit;
+      letter-spacing: -0.2px;
+    }
+    .btn:hover { background: #18a35f; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background: #1a3327; color: #2d6b50; cursor: not-allowed; }
+
+    .error {
+      display: none;
+      background: rgba(255, 80, 80, 0.08);
+      border: 1px solid rgba(255, 80, 80, 0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #ff6b6b;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .error.show { display: block; }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: #444;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back:hover { color: #888; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="/" class="logo">
+      <img src="/images/app-icon.png" alt="StayTrackr" />
+      <span>StayTrackr</span>
+    </a>
+
+    <h1>Admin Login</h1>
+    <p class="subtitle">Enter your password to access the dashboard.</p>
+
+    <div class="error" id="errorMsg">Incorrect password. Please try again.</div>
+
+    <form id="loginForm" autocomplete="off">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter admin password"
+          autocomplete="current-password"
+          autofocus
+          required
+        />
+        <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">👁</button>
+      </div>
+      <button type="submit" class="btn" id="loginBtn">Sign In</button>
+    </form>
+
+    <a href="/" class="back">← Back to StayTrackr</a>
+  </div>
+
+  <script>
+    const form      = document.getElementById('loginForm');
+    const pwInput   = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePw');
+    const loginBtn  = document.getElementById('loginBtn');
+    const errorMsg  = document.getElementById('errorMsg');
+
+    // If already logged in, redirect straight to admin
+    if (localStorage.getItem('staytrackr_admin_token')) {
+      window.location.href = '/admin';
+    }
+
+    // Toggle password visibility
+    toggleBtn.addEventListener('click', () => {
+      const isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      toggleBtn.textContent = isText ? '👁' : '🙈';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pw = pwInput.value.trim();
+      if (!pw) return;
+
+      errorMsg.classList.remove('show');
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+      try {
+        // Test the password against the admin API
+        const res = await fetch('/admin/api/stats', {
+          headers: { 'Authorization': `Bearer ${pw}` }
+        });
+
+        if (res.ok) {
+          // Valid — store token and redirect
+          localStorage.setItem('staytrackr_admin_token', pw);
+          window.location.href = '/admin';
+        } else {
+          errorMsg.classList.add('show');
+          pwInput.value = '';
+          pwInput.focus();
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Sign In';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.classList.add('show');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -216,6 +216,11 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+// ─── Admin login page ─────────────────────────────────────────────
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 // ─── Admin dashboard ─────────────────────────────────────────────
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
